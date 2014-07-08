@@ -38,7 +38,8 @@
 #include <afxcontrolbars.h>     // 功能区和控件条的 MFC 支持
 
 
-
+#include <vfw.h>                   //video for windows支持                
+#pragma comment(lib,"vfw32.lib")   //载入vfw库
 
 
 

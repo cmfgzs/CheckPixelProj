@@ -49,6 +49,7 @@ END_MESSAGE_MAP()
 
 CCheckPixelUIDlg::CCheckPixelUIDlg(CWnd* pParent /*=NULL*/)
 	: CDialog(CCheckPixelUIDlg::IDD, pParent)
+	, m_strSaveDir(_T(""))
 {
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
 }
@@ -56,6 +57,9 @@ CCheckPixelUIDlg::CCheckPixelUIDlg(CWnd* pParent /*=NULL*/)
 void CCheckPixelUIDlg::DoDataExchange(CDataExchange* pDX)
 {
 	CDialog::DoDataExchange(pDX);
+	DDX_Control(pDX, IDC_STATIC_VIDEO, m_StaticVideo);
+	DDX_Control(pDX, IDC_COMBO1, m_DevicesList);
+	DDX_Text(pDX, IDC_SAVE_PATH, m_strSaveDir);
 }
 
 BEGIN_MESSAGE_MAP(CCheckPixelUIDlg, CDialog)
@@ -63,6 +67,9 @@ BEGIN_MESSAGE_MAP(CCheckPixelUIDlg, CDialog)
 	ON_WM_PAINT()
 	ON_WM_QUERYDRAGICON()
 	//}}AFX_MSG_MAP
+	ON_BN_CLICKED(IDC_BTN_CAP_IMG, &CCheckPixelUIDlg::OnBnClickedBtnCapImg)
+	ON_BN_CLICKED(IDC_BTN_FREEZE, &CCheckPixelUIDlg::OnBnClickedBtnFreeze)
+	ON_BN_CLICKED(IDC_BTN_SAVE_PATH, &CCheckPixelUIDlg::OnBnClickedBtnSavePath)
 END_MESSAGE_MAP()
 
 
@@ -97,7 +104,17 @@ BOOL CCheckPixelUIDlg::OnInitDialog()
 	SetIcon(m_hIcon, TRUE);			// 设置大图标
 	SetIcon(m_hIcon, FALSE);		// 设置小图标
 
+	m_bFreeze = FALSE;
+
 	// TODO: 在此添加额外的初始化代码
+	m_cap.EnumDevices(m_DevicesList.GetSafeHwnd());//获取连接的视频设备
+
+	m_DevicesList.SetCurSel(0);
+	HWND hWnd = m_StaticVideo.GetSafeHwnd();
+	if (hWnd != NULL)
+	{
+		m_cap.Init(0,hWnd);//初始化摄像头
+	}
 
 	return TRUE;  // 除非将焦点设置到控件，否则返回 TRUE
 }
@@ -151,3 +168,51 @@ HCURSOR CCheckPixelUIDlg::OnQueryDragIcon()
 	return static_cast<HCURSOR>(m_hIcon);
 }
 
+
+void CCheckPixelUIDlg::OnBnClickedBtnCapImg()
+{
+	// TODO: 在此添加控件通知处理程序代码
+}
+
+void CCheckPixelUIDlg::OnBnClickedBtnFreeze()
+{
+	// TODO: 在此添加控件通知处理程序代码
+	if (!m_bFreeze)
+	{
+		//capPreview(m_StaticVideo.GetSafeHwnd(),FALSE);
+		m_cap.SetMediaPlayOrPause(FALSE);
+		m_bFreeze = TRUE;
+	}
+	else
+	{
+		m_cap.SetMediaPlayOrPause(TRUE);
+		m_bFreeze = FALSE;
+	}
+}
+
+void CCheckPixelUIDlg::OnBnClickedBtnSavePath()
+{
+	TCHAR szFolderPath[2048] = {0};
+	CString strFolder = TEXT("");
+	BROWSEINFO sInfo;
+	::ZeroMemory(&sInfo,sizeof(sInfo));
+	sInfo.pidlRoot = 0;
+	sInfo.lpszTitle = _T("选择保存文件夹");
+	sInfo.ulFlags =  BIF_DONTGOBELOWDOMAIN | BIF_RETURNONLYFSDIRS | BIF_NEWDIALOGSTYLE | BIF_EDITBOX;
+	sInfo.lpfn = NULL;
+	LPITEMIDLIST lpidBrowse = ::SHBrowseForFolder(&sInfo);
+	if (lpidBrowse!=NULL)
+	{
+		if (::SHGetPathFromIDList(lpidBrowse,szFolderPath))    
+		{  
+			strFolder = szFolderPath;  
+		} 
+	}
+	if (lpidBrowse != NULL)
+	{
+		::CoTaskMemFree(lpidBrowse);
+	}
+	m_strSaveDir = strFolder;
+	UpdateData(FALSE);
+
+}

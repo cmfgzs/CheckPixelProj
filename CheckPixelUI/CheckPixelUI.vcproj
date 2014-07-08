@@ -67,8 +67,10 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
+				AdditionalDependencies="strmbasd.lib quartz.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib wpcap.lib netapi32.lib packet.lib IPHlpApi.Lib icmp.lib"
 				OutputFile="..\Bin\$(ProjectName)D.exe"
 				LinkIncremental="2"
+				AdditionalLibraryDirectories="../Bin;../wincap/Lib"
 				GenerateDebugInformation="true"
 				SubSystem="2"
 				TargetMachine="1"
@@ -187,6 +189,10 @@
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}"
 			>
 			<File
+				RelativePath=".\CaptureVideo.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\CheckPixelUI.cpp"
 				>
 			</File>
@@ -220,6 +226,10 @@
 			Filter="h;hpp;hxx;hm;inl;inc;xsd"
 			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}"
 			>
+			<File
+				RelativePath=".\CaptureVideo.h"
+				>
+			</File>
 			<File
 				RelativePath=".\CheckPixelUI.h"
 				>
@@ -265,5 +275,9 @@
 		</File>
 	</Files>
 	<Globals>
+		<Global
+			Name="RESOURCE_FILE"
+			Value="CheckPixelUI.rc"
+		/>
 	</Globals>
 </VisualStudioProject>
