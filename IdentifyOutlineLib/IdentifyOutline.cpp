@@ -1,7 +1,23 @@
 #include "IdentifyOutline.h"
 
-IDENTIFYOUTLINELIB_DLLSPEC DetectObjectProperty* ImgAnalyze(DetectType, char*)
+
+DetectObjectProperty* MonitorScreen_Handle(char* cImg)
 {
-	DetectObjectProperty* pObj = new DetectObjectProperty;
-	return pObj;
+	return new DetectObjectProperty;
+}
+
+
+DetectObjectProperty* (*PM[])(char*) = 
+{
+	NULL,
+
+	MonitorScreen_Handle,
+
+	NULL,
+};
+
+
+IDENTIFYOUTLINELIB_DLLSPEC DetectObjectProperty* ImgAnalyze(DetectType type, char* cImg)
+{
+	return PM[type](cImg);
 }

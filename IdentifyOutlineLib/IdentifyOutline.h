@@ -12,14 +12,10 @@
 extern "C" {
 #endif
 
-
-	// 处理函数
-	IDENTIFYOUTLINELIB_DLLSPEC DetectObjectProperty* ImgAnalyze(DetectType, char*);
-
-
+// 处理函数
+IDENTIFYOUTLINELIB_DLLSPEC DetectObjectProperty* ImgAnalyze(DetectType, char*);
 
 #ifdef __cplusplus
 }
 #endif
-
 #endif

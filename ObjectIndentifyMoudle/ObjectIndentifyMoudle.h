@@ -1,6 +1,5 @@
 #ifndef _OBJECT_INDENTIFY_MOUDLE_H_INCLUDED
 #define _OBJECT_INDENTIFY_MOUDLE_H_INCLUDED
-#include "DataAnalysMoudleBasicDef.h"
 #include "IdentifyFuncsSet.h"         //实际数据处理文件
 
 
