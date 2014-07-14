@@ -172,17 +172,6 @@ HCURSOR CCheckPixelUIDlg::OnQueryDragIcon()
 void CCheckPixelUIDlg::OnBnClickedBtnCapImg()
 {
 	// TODO: 在此添加控件通知处理程序代码
-	if (m_strSaveDir.IsEmpty())
-	{
-		CFileDialog dlg(FALSE,_T("BMP"),_T("SavePic.bmp"),OFN_HIDEREADONLY | OFN_OVERWRITEPROMPT);
-		if (IDOK == dlg.DoModal())
-		{
-			m_cap.m_GrabberCB.m_szFileName = dlg.GetPathName();
-		}
-
-	}
-	m_cap.GrabOneFrame(TRUE);//捕捉一张图片
-	//HBITMAP hbmp = m_cap.m_GrabberCB.m_SnapBMPHandle;
 }
 
 void CCheckPixelUIDlg::OnBnClickedBtnFreeze()
@@ -224,8 +213,6 @@ void CCheckPixelUIDlg::OnBnClickedBtnSavePath()
 		::CoTaskMemFree(lpidBrowse);
 	}
 	m_strSaveDir = strFolder;
-	m_cap.SetSaveBMPFileName(m_strSaveDir);
-	
 	UpdateData(FALSE);
 
 }

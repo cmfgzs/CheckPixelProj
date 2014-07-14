@@ -6,13 +6,72 @@
 /////////////////////////////////////////////////////////////////////
 #include "stdafx.h"
 #include "CaptureVideo.h"
-#include <io.h>
 #ifdef _DEBUG
 #undef THIS_FILE
 static char THIS_FILE[]=__FILE__;
 #define new DEBUG_NEW
 #endif
 BOOL bOneShot=FALSE;//全局变量
+class CSampleGrabberCB : public ISampleGrabberCB
+{
+public:
+	long lWidth;
+	long lHeight;
+	char m_szFileName[MAX_PATH];// 位图文件名称
+	CSampleGrabberCB( ){
+		strcpy(m_szFileName, "c:\\donaldo.bmp");
+	}
+	STDMETHODIMP_(ULONG) AddRef() { return 2; }
+	STDMETHODIMP_(ULONG) Release() { return 1; }
+	STDMETHODIMP QueryInterface(REFIID riid, void ** ppv){
+		if( riid == IID_ISampleGrabberCB || riid == IID_IUnknown ){
+			*ppv = (void *) static_cast<ISampleGrabberCB*> ( this );
+			return NOERROR;
+		}
+		return E_NOINTERFACE;
+	}
+	STDMETHODIMP SampleCB( double SampleTime, IMediaSample * pSample ){
+		return 0;
+	}
+	STDMETHODIMP BufferCB( double dblSampleTime, BYTE * pBuffer, long lBufferSize ){
+		if( !bOneShot )return 0;
+		
+		if (!pBuffer)return E_POINTER;
+		SaveBitmap(pBuffer, lBufferSize);
+		bOneShot = FALSE;
+		return 0;
+	}
+	//创建位图文件
+	BOOL SaveBitmap(BYTE * pBuffer, long lBufferSize )
+	{
+		HANDLE hf = CreateFile(
+			(LPCWSTR)m_szFileName, GENERIC_WRITE, FILE_SHARE_READ, NULL,
+			CREATE_ALWAYS, NULL, NULL );
+		if( hf == INVALID_HANDLE_VALUE )return 0;
+		// 写文件头
+		BITMAPFILEHEADER bfh;
+		memset( &bfh, 0, sizeof( bfh ) );
+		bfh.bfType = 'MB';
+		bfh.bfSize = sizeof( bfh ) + lBufferSize + sizeof( BITMAPINFOHEADER );
+		bfh.bfOffBits = sizeof( BITMAPINFOHEADER ) + sizeof( BITMAPFILEHEADER );
+		DWORD dwWritten = 0;
+		WriteFile( hf, &bfh, sizeof( bfh ), &dwWritten, NULL );
+		// 写位图格式
+		BITMAPINFOHEADER bih;
+		memset( &bih, 0, sizeof( bih ) );
+		bih.biSize = sizeof( bih );
+		bih.biWidth = lWidth;
+		bih.biHeight = lHeight;
+		bih.biPlanes = 1;
+		bih.biBitCount = 24;
+		WriteFile( hf, &bih, sizeof( bih ), &dwWritten, NULL );
+		// 写位图数据
+		WriteFile( hf, pBuffer, lBufferSize, &dwWritten, NULL );
+		CloseHandle( hf );
+		return 0;
+	}
+};
+CSampleGrabberCB mCB;
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
@@ -39,10 +98,22 @@ CCaptureVideo::~CCaptureVideo()
 		m_pVW->put_Visible(OAFALSE);
 		m_pVW->put_Owner(NULL);
 	}
-	SAFE_RELEASE(m_pCapture);
-	SAFE_RELEASE(m_pMC);
-	SAFE_RELEASE(m_pGB);
-	SAFE_RELEASE(m_pBF);
+	if (m_pCapture)
+	{
+		SAFE_RELEASE(m_pCapture);
+	}
+	if (m_pMC)
+	{
+		SAFE_RELEASE(m_pMC);
+	}
+	if (m_pGB)
+	{
+		SAFE_RELEASE(m_pGB);
+	}
+	if (m_pBF)
+	{
+		SAFE_RELEASE(m_pBF);
+	}	
 	CoUninitialize( );
 }
 int CCaptureVideo::EnumDevices(HWND hList)
@@ -58,7 +129,6 @@ int CCaptureVideo::EnumDevices(HWND hList)
 	if (hr != NOERROR)
 		return -1;
 	CComPtr<IEnumMoniker> pEm;
-
 	hr = pCreateDevEnum->CreateClassEnumerator(CLSID_VideoInputDeviceCategory,&pEm, 0);
 	
 	if (hr != NOERROR)
@@ -147,15 +217,15 @@ HRESULT CCaptureVideo::Init(int iDeviceID, HWND hWnd)
 	}
 	
 	VIDEOINFOHEADER * vih = (VIDEOINFOHEADER*) mt.pbFormat;
-	m_GrabberCB.lWidth = vih->bmiHeader.biWidth;
-	m_GrabberCB.lHeight = vih->bmiHeader.biHeight;
+	mCB.lWidth = vih->bmiHeader.biWidth;
+	mCB.lHeight = vih->bmiHeader.biHeight;
 	FreeMediaType(mt);
 	hr = m_pGrabber->SetBufferSamples( FALSE );
 	hr = m_pGrabber->SetOneShot( FALSE );
-	hr = m_pGrabber->SetCallback( &m_GrabberCB, 1 );
+	hr = m_pGrabber->SetCallback( &mCB, 1 );
 	
 	//设置视频捕捉窗口
-	m_hWnd = hWnd ;
+		m_hWnd = hWnd ;
 	SetupVideoWindow();
 	hr = m_pMC->Run();//开始视频捕捉
 	if(FAILED(hr)){AfxMessageBox(_T("不能捕捉图像"));return hr;}
@@ -283,105 +353,7 @@ void CCaptureVideo::SetMediaPlayOrPause( BOOL isPlay )
 	}
 }
 
-void CCaptureVideo::SetSaveBMPFileName( const CString& saveDir )
+void CCaptureVideo::CaptureMediaBMP( const CString& saveDir )
 {//截屏功能
-	CString tempFileName = saveDir;
-	int i=1;
-	CString strTemp;
-	while(true)
-	{
-		strTemp.Format(_T("\\SaveBMP%d.bmp"),i);
-		tempFileName += strTemp;
-		char* filename = (LPSTR)(LPCTSTR)tempFileName;
-		if (_access(filename,0)==-1)
-		{
-			break;
-		}
-	}
-	m_GrabberCB.m_szFileName = tempFileName;
-}
 
-
-CSampleGrabberCB::CSampleGrabberCB()
-{
-	m_szFileName = _T("");
-	m_SnapBMPHandle = NULL;
-}
-
-
-STDMETHODIMP CSampleGrabberCB::QueryInterface( REFIID riid, void ** ppv )
-{
-	if( riid == IID_ISampleGrabberCB || riid == IID_IUnknown ){
-		*ppv = (void *) static_cast<ISampleGrabberCB*> ( this );
-		return NOERROR;
-	}
-	return E_NOINTERFACE;
-}
-
-STDMETHODIMP CSampleGrabberCB::SampleCB( double SampleTime, IMediaSample * pSample )
-{
-	return 0;
-}
-
-STDMETHODIMP CSampleGrabberCB::BufferCB( double dblSampleTime, BYTE * pBuffer, long lBufferSize )
-{
-	if( !bOneShot )return 0;
-
-	if (!pBuffer)return E_POINTER;
-	SaveBitmap(pBuffer, lBufferSize);
-	bOneShot = FALSE;
-	return 0;
-}
-
-BOOL CSampleGrabberCB::SaveBitmap( BYTE * pBuffer, long lBufferSize )
-{
-	if (m_szFileName.IsEmpty())
-	{
-		AfxMessageBox(_T("图片名称为空!"));
-		return FALSE;
-	}
-	HANDLE hf = CreateFile(
-		m_szFileName, GENERIC_WRITE, FILE_SHARE_READ, NULL,
-		CREATE_ALWAYS, NULL, NULL );
-	if( hf == INVALID_HANDLE_VALUE )return 0;
-	// 写文件头
-	BITMAPFILEHEADER bfh;
-	memset( &bfh, 0, sizeof( bfh ) );
-	bfh.bfType = 'MB';
-	bfh.bfSize = sizeof( bfh ) + lBufferSize + sizeof( BITMAPINFOHEADER );
-	bfh.bfOffBits = sizeof( BITMAPINFOHEADER ) + sizeof( BITMAPFILEHEADER );
-	DWORD dwWritten = 0;
-	WriteFile( hf, &bfh, sizeof( bfh ), &dwWritten, NULL );
-	// 写位图格式
-	BITMAPINFOHEADER bih;
-	memset( &bih, 0, sizeof( bih ) );
-	bih.biSize = sizeof( bih );
-	bih.biWidth = lWidth;
-	bih.biHeight = lHeight;
-	bih.biPlanes = 1;
-	bih.biBitCount = 24;
-	WriteFile( hf, &bih, sizeof( bih ), &dwWritten, NULL );
-	// 写位图数据
-	WriteFile( hf, pBuffer, lBufferSize, &dwWritten, NULL );
-	m_SnapBMPHandle = MakeBitmap(::GetWindowDC(NULL),pBuffer,bih);
-	CloseHandle( hf );
-	AfxMessageBox(_T("保存图片成功!"));
-	return 0;
-}
-
-HBITMAP CSampleGrabberCB::MakeBitmap( HDC hDc,LPBYTE lpBits,BITMAPINFOHEADER& bmiheader )
-{
-	BITMAPINFO bitinfo;
-	memset(&bitinfo, 0, sizeof(BITMAPINFO));
-	bitinfo.bmiHeader = bmiheader;
-	HBITMAP hBmp = CreateDIBitmap(hDc,&bitinfo.bmiHeader,CBM_INIT,lpBits,&bitinfo,DIB_RGB_COLORS);
-	return hBmp;
-}
-
-CSampleGrabberCB::~CSampleGrabberCB()
-{
-	if (m_SnapBMPHandle != NULL)
-	{
-		DeleteObject(m_SnapBMPHandle);
-	}
 }
