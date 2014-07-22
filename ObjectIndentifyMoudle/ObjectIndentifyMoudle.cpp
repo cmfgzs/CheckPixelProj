@@ -38,14 +38,14 @@ Description :检测分析功能模块的总入口
 Function    :CameraDataProcessEntry
 Input       :LPVOID lParam, 带处理的数据流
 			（经过轮廓线提取后的数据，请调用者保证入参非空，申请的内存请在外部释放）			 
-Output      :DetectObjectProperty& strAnalyseResult,分析后的结果
+Output      :DetectObjectProperty* pAnalyseResult,分析后的结果
 Return      :0： 处理成功
              others：处理失败（详见错误码定义）
 Author      :Qinbeizhi
 Date        :2014.6.27
 Copyright   :Qinbeizhi
 **************************************************************************************************************************/
-int CameraDataProcessEntry(LPVOID lParam, DetectObjectProperty& strAnalyseResult)
+int CameraDataProcessEntry(LPVOID lParam, DetectObjectProperty* pAnalyseResult)
 {
 	int nRetCode = 0; 
 	DataProcessMoudle_CalBack pDataProOperator = NULL;
@@ -57,7 +57,7 @@ int CameraDataProcessEntry(LPVOID lParam, DetectObjectProperty& strAnalyseResult
 		nRetCode = UNKONWN_DETECT_TYPE;
 		return nRetCode;
 	}
-	nRetCode = pDataProOperator(pDataFromPre->pDataStream, strAnalyseResult);
+	nRetCode = pDataProOperator(pDataFromPre->pDataStream, pAnalyseResult);
 	return nRetCode;
 }
 

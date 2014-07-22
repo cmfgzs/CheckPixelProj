@@ -3,27 +3,23 @@
 
 #include <BasicDef.h>
 
+#define BAD_PIXEL_LEVEL 5 //坏点评判标准
 /******************************************************************************************************************************************************
 *******************************************************************************************************************************************************
 ***********************************************该文件的所有函数均是用来对不同类型检测对象进行相应分析**************************************************
 *******************************************************************************************************************************************************
 ******************************************************************************************************************************************************/
 
-
-
-
-
 /**************************************************************************************************************************
-Description :显示器屏幕坏点检测模块
-Function    :MonitorScreenDeadPixel_Identify
-Input       :DataStream pDataStream,待处理的数据流
-Output      :DetectObjectProperty& strAnalyseResult,最终分析后的结果
-Return      :0： 处理成功
-			 others：处理失败（详见错误码定义）          
-Author      :Qinbeizhi
-Date        :2014.6.27
+Description :显示器屏幕质量检测模块
+Function     :MonitorScreenDeadPixel_Identify
+Input          :DataStream pDataStream,待处理的数据流
+Output       :DetectObjectProperty* pAnalyseResult,最终分析后的结果
+Return        :0： 处理成功
+			       others：处理失败（详见错误码定义）          
+Author       :Qinbeizhi
+Date           :2014.6.27
 Copyright   :Qinbeizhi
 **************************************************************************************************************************/
-int MonitorScreenDeadPixel_Identify(DataStream* pDataStream, DetectObjectProperty& strAnalyseResult);
-
+int MonitorScreenDeadPixel_Identify(DataStream* pDataStream, DetectObjectProperty* pAnalyseResult);
 #endif

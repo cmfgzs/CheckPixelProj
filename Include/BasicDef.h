@@ -37,21 +37,27 @@ struct DataForFurProcess
 };
 #pragma pack(pop)
 
+struct Position
+{
+	int Xposition;
+	int Yposition;
+};
 /*处理对象基础数据结构*/
 struct DetectObjectProperty
 {
 	DetectObjectProperty()
 	{
-
+		emCurDetectType = StartObject;
 	}
 
 	~DetectObjectProperty()
 	{
 
 	}
+	virtual  int GetResults() = 0;
 	/*属性部分*/
 
-protected : 
+public : 
 	DetectType emCurDetectType; //当前的检测对象		
 };
 
@@ -59,7 +65,7 @@ struct MonitorScreenProperty :DetectObjectProperty
 {
 	MonitorScreenProperty()
 	{
-
+		nBadPixelNum = 0;
 	}
 
 	~MonitorScreenProperty()
@@ -67,8 +73,11 @@ struct MonitorScreenProperty :DetectObjectProperty
 
 	}
 	/*属性部分*/
-
+public:	
+	int nBadPixelNum; //坏点个数	
+	int GetResults()	{ return nBadPixelNum;}	
 };
 /**********************************************数据结构定义区域End***************************************************/
 #endif
+
 
