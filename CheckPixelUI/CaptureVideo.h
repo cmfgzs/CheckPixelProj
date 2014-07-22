@@ -25,10 +25,31 @@
 	x = NULL;\
 }
 #endif
-class CSampleGrabberCB;
+
+
+class CSampleGrabberCB : public ISampleGrabberCB
+{
+public:
+	CSampleGrabberCB();
+	~CSampleGrabberCB();
+	long lWidth;
+	long lHeight;
+	//char m_szFileName[MAX_PATH];// 位图文件名称
+	CString m_szFileName;
+	HBITMAP m_SnapBMPHandle;
+	
+public:
+	STDMETHODIMP_(ULONG) AddRef() { return 2;}
+	STDMETHODIMP_(ULONG) Release() { return 1;}
+	STDMETHODIMP QueryInterface(REFIID riid, void ** ppv);
+	STDMETHODIMP SampleCB( double SampleTime, IMediaSample * pSample );
+	STDMETHODIMP BufferCB( double dblSampleTime, BYTE * pBuffer, long lBufferSize );
+	BOOL SaveBitmap(BYTE * pBuffer, long lBufferSize );
+	HBITMAP MakeBitmap(HDC hDc,LPBYTE lpBits,BITMAPINFOHEADER& bmiheader);
+};
+
 class CCaptureVideo : public CWnd
 {
-	friend class CSampleGrabberCB;
 public:
 	void GrabOneFrame(BOOL bGrab);
 	HRESULT Init(int iDeviceID,HWND hWnd);
@@ -43,6 +64,8 @@ private:
 	IMediaControl* m_pMC;
 	IVideoWindow* m_pVW;
 	CComPtr<ISampleGrabber> m_pGrabber;
+
+	CString m_strBMPFile;
 protected:
 	void FreeMediaType(AM_MEDIA_TYPE& mt);
 	bool BindFilter(int deviceId, IBaseFilter **pFilter);
@@ -51,6 +74,9 @@ protected:
 	HRESULT InitCaptureGraphBuilder();
 public:
 	void SetMediaPlayOrPause(BOOL isPlay);
-	void CaptureMediaBMP(const CString& saveDir);
+	void SetSaveBMPFileName(const CString& saveDir);
+public:
+	CSampleGrabberCB m_GrabberCB;
+	
 };
 #endif // !defined(AFX_CAPTUREVIDEO_H__F5345AA4_A39F_4B07_B843_3D87C4287AA0__INCLUDED_)
