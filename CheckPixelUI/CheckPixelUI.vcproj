@@ -201,6 +201,18 @@
 				>
 			</File>
 			<File
+				RelativePath=".\PictureCtrl.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\ShowBMPStatic.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\Showpic.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\stdafx.cpp"
 				>
 				<FileConfiguration
@@ -239,7 +251,19 @@
 				>
 			</File>
 			<File
+				RelativePath=".\PictureCtrl.h"
+				>
+			</File>
+			<File
 				RelativePath=".\Resource.h"
+				>
+			</File>
+			<File
+				RelativePath=".\ShowBMPStatic.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Showpic.h"
 				>
 			</File>
 			<File
@@ -256,6 +280,10 @@
 			Filter="rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav"
 			UniqueIdentifier="{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}"
 			>
+			<File
+				RelativePath=".\res\bitmap1.bmp"
+				>
+			</File>
 			<File
 				RelativePath=".\res\CheckPixelUI.ico"
 				>

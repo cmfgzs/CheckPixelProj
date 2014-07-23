@@ -16,6 +16,7 @@
 #include <windows.h>
 #include <dshow.h>
 #include <qedit.h>
+#define WM_CAPTURE_BITMAP WM_USER+100
 
 #ifndef SAFE_RELEASE
 #define SAFE_RELEASE( x )\
@@ -25,6 +26,19 @@
 	x = NULL;\
 }
 #endif
+
+typedef struct tag_bmpinfo
+{
+	tag_bmpinfo()
+	{
+		lBufferSize = 0;
+		pBuffer = NULL;
+	}
+	double dbSampleTime;
+	long lBufferSize;
+	BYTE* pBuffer;
+	BITMAPINFOHEADER bih;
+} CapBmpInfo;
 
 
 class CSampleGrabberCB : public ISampleGrabberCB
@@ -37,6 +51,21 @@ public:
 	//char m_szFileName[MAX_PATH];// 位图文件名称
 	CString m_szFileName;
 	HBITMAP m_SnapBMPHandle;
+private:
+	LPBITMAPFILEHEADER m_pFileHeader;//bmp文件头
+	LPBITMAPINFOHEADER m_pBmpInfo;//bmp信息头
+
+	BYTE* m_pImgFileData;//BMP文件数据
+	BOOL m_bValidBMP;
+
+	LPBYTE m_pBitmapHeader;
+	LPVOID m_pvColorTable;//调色板
+
+	
+
+	HWND m_hWnd;
+public:
+	CapBmpInfo m_capbmp;
 	
 public:
 	STDMETHODIMP_(ULONG) AddRef() { return 2;}
@@ -46,6 +75,12 @@ public:
 	STDMETHODIMP BufferCB( double dblSampleTime, BYTE * pBuffer, long lBufferSize );
 	BOOL SaveBitmap(BYTE * pBuffer, long lBufferSize );
 	HBITMAP MakeBitmap(HDC hDc,LPBYTE lpBits,BITMAPINFOHEADER& bmiheader);
+	BOOL FormatImage(BYTE* lpImageData,int nBitcount,int nWidth,int nHeight);
+	void SetImgFileData(int datawidth,int dataheight);
+	BYTE* GetImgFileData();
+	LPBITMAPINFOHEADER GetBMPInforHeader();
+	LPBITMAPFILEHEADER GetBMPFileHeader();
+	void SetSafeWnd(HWND hWnd);
 };
 
 class CCaptureVideo : public CWnd
@@ -63,11 +98,10 @@ private:
 	IBaseFilter* m_pBF;
 	IMediaControl* m_pMC;
 	IVideoWindow* m_pVW;
-	CComPtr<ISampleGrabber> m_pGrabber;
+	
 
 	CString m_strBMPFile;
 protected:
-	void FreeMediaType(AM_MEDIA_TYPE& mt);
 	bool BindFilter(int deviceId, IBaseFilter **pFilter);
 	void ResizeVideoWindow();
 	HRESULT SetupVideoWindow();
@@ -75,8 +109,10 @@ protected:
 public:
 	void SetMediaPlayOrPause(BOOL isPlay);
 	void SetSaveBMPFileName(const CString& saveDir);
+	void FreeMediaType(AM_MEDIA_TYPE& mt);
 public:
 	CSampleGrabberCB m_GrabberCB;
+	CComPtr<ISampleGrabber> m_pGrabber;
 	
 };
 #endif // !defined(AFX_CAPTUREVIDEO_H__F5345AA4_A39F_4B07_B843_3D87C4287AA0__INCLUDED_)

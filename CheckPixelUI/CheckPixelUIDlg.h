@@ -5,7 +5,12 @@
 #pragma once
 #include "afxwin.h"
 #include "CaptureVideo.h"
+#include "ShowBMPStatic.h"
+#include "PictureCtrl.h"
 
+
+#define TIMER_DELAY 1000 //拍照延时
+#define TIMER_ID 1
 
 // CCheckPixelUIDlg 对话框
 class CCheckPixelUIDlg : public CDialog
@@ -32,14 +37,27 @@ protected:
 	afx_msg HCURSOR OnQueryDragIcon();
 	afx_msg void OnBnClickedBtnCapImg();
 	afx_msg void OnBnClickedBtnFreeze();
+	afx_msg void OnBnClickedBtnSavePath();
+	afx_msg void OnBnClickedBtnSavebmp();
+	afx_msg void OnBnClickedBtnAnalyse();
+	afx_msg BOOL OnEraseBkgnd(CDC* pDC);
+	afx_msg void OnTimer(UINT_PTR nIDEvent);
+	afx_msg LRESULT OnCapMessage(WPARAM wparam,LPARAM lparam);
+
 	DECLARE_MESSAGE_MAP()
 public:
 	CStatic m_StaticVideo;
 	CCaptureVideo m_cap;
 	BOOL m_bFreeze;
-	
+	HBITMAP m_hBitmap;
+	long m_lWidth;
+	long m_lHeight;
 	
 	CComboBox m_DevicesList;
 	CString m_strSaveDir;
-	afx_msg void OnBnClickedBtnSavePath();
+	CShowBMPStatic m_staticBMP;
+private:
+	void OnStartCap();//开始抓拍
+
+	
 };

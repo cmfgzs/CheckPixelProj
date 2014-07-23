@@ -150,12 +150,15 @@ HRESULT CCaptureVideo::Init(int iDeviceID, HWND hWnd)
 	m_GrabberCB.lWidth = vih->bmiHeader.biWidth;
 	m_GrabberCB.lHeight = vih->bmiHeader.biHeight;
 	FreeMediaType(mt);
-	hr = m_pGrabber->SetBufferSamples( FALSE );
+	hr = m_pGrabber->SetBufferSamples( TRUE );
 	hr = m_pGrabber->SetOneShot( FALSE );
 	hr = m_pGrabber->SetCallback( &m_GrabberCB, 1 );
+
+
 	
 	//设置视频捕捉窗口
 	m_hWnd = hWnd ;
+	//m_GrabberCB.SetSafeWnd(m_hWnd);
 	SetupVideoWindow();
 	hr = m_pMC->Run();//开始视频捕捉
 	if(FAILED(hr)){AfxMessageBox(_T("不能捕捉图像"));return hr;}
@@ -306,6 +309,9 @@ CSampleGrabberCB::CSampleGrabberCB()
 {
 	m_szFileName = _T("");
 	m_SnapBMPHandle = NULL;
+	m_pImgFileData = NULL;
+	m_pFileHeader = new BITMAPFILEHEADER;
+	m_pBitmapHeader = new BYTE[sizeof(BITMAPINFOHEADER)];
 }
 
 
@@ -328,7 +334,41 @@ STDMETHODIMP CSampleGrabberCB::BufferCB( double dblSampleTime, BYTE * pBuffer, l
 	if( !bOneShot )return 0;
 
 	if (!pBuffer)return E_POINTER;
-	SaveBitmap(pBuffer, lBufferSize);
+	if (m_capbmp.lBufferSize<lBufferSize&&m_capbmp.pBuffer!= NULL)
+	{
+		delete[] m_capbmp.pBuffer;
+		m_capbmp.pBuffer = NULL;
+		m_capbmp.lBufferSize = 0;
+	}
+	m_capbmp.dbSampleTime = dblSampleTime;
+	if (!m_capbmp.pBuffer)
+	{
+		m_capbmp.lBufferSize = lBufferSize;
+		m_capbmp.pBuffer = new BYTE[lBufferSize];
+	}
+	if (!m_capbmp.pBuffer)
+	{
+		m_capbmp.lBufferSize = 0;
+		return E_OUTOFMEMORY;
+	}
+
+	BITMAPINFOHEADER bih;
+	memset( &bih, 0, sizeof( bih ) );
+	bih.biSize = sizeof( bih );
+	bih.biWidth = lWidth;
+	bih.biHeight = lHeight;
+	bih.biPlanes = 1;
+	bih.biBitCount = 24;
+	memcpy(&(m_capbmp.bih),&bih,sizeof(bih));
+
+	memcpy(m_capbmp.pBuffer,pBuffer,sizeof(BYTE)*lBufferSize);
+
+	//BYTE* pImageData = new BYTE[m_capbmp.lBufferSize];
+	//CopyMemory(pImageData,m_capbmp.pBuffer,m_capbmp.lBufferSize);
+
+	SendMessage(m_hWnd,WM_CAPTURE_BITMAP,0,0);
+
+	//SaveBitmap(pBuffer, lBufferSize);
 	bOneShot = FALSE;
 	return 0;
 }
@@ -384,4 +424,154 @@ CSampleGrabberCB::~CSampleGrabberCB()
 	{
 		DeleteObject(m_SnapBMPHandle);
 	}
+	if (m_pBitmapHeader!= NULL)
+	{
+		delete m_pBitmapHeader;
+		m_pBitmapHeader = NULL;
+	}
+	if (m_pFileHeader != NULL)
+	{
+		delete m_pFileHeader;
+		m_pFileHeader = NULL;
+	}
+	if (m_capbmp.pBuffer != NULL)
+	{
+		delete[] m_capbmp.pBuffer;
+	}
+	if (m_pImgFileData != NULL)
+	{
+		delete[] m_pImgFileData;
+	}
+}
+
+BOOL CSampleGrabberCB::FormatImage( BYTE* lpImageData,int nBitcount,int nWidth,int nHeight )
+{
+	m_bValidBMP = FALSE;
+	int nKlsBmpBitCount;
+	int nImgWidth = nWidth;
+	int nImgHeight = nHeight;
+	if (nBitcount==8||nBitcount==24||nBitcount==32)
+	{
+		nKlsBmpBitCount = nBitcount;
+	}
+	else
+	{
+		return m_bValidBMP;
+	}
+	int nDataWidth = nKlsBmpBitCount/8*nWidth;
+
+	nDataWidth = ( nDataWidth % 4 == 0 ) ? nDataWidth : ( ( nDataWidth / 4 + 1 ) * 4 ) ;
+
+	m_pFileHeader->bfType = 0x4d42;
+	m_pFileHeader->bfReserved1 = m_pFileHeader->bfReserved2 = 0;
+	m_pFileHeader->bfSize = sizeof(BITMAPFILEHEADER)+sizeof(BITMAPINFOHEADER)+ nDataWidth*nImgHeight;
+	if (nBitcount == 8)
+	{
+		int nBmpInfoSize = sizeof(BITMAPFILEHEADER)   
+			+ sizeof(BITMAPINFOHEADER)  
+			+ 256 * 4 ;  
+		m_pFileHeader->bfOffBits = nBmpInfoSize;
+		m_pBitmapHeader = new BYTE[nBmpInfoSize];
+		m_pBmpInfo = (LPBITMAPINFOHEADER)m_pBitmapHeader;
+		m_pvColorTable = m_pBitmapHeader + sizeof(BITMAPINFOHEADER);
+		LPRGBQUAD pDibQuad =  (LPRGBQUAD)(m_pvColorTable);
+
+		for (int c=0;c<256;c++)
+		{
+			pDibQuad[c].rgbRed = c;
+			pDibQuad[c].rgbGreen = c;
+			pDibQuad[c].rgbBlue = c;
+			pDibQuad[c].rgbReserved = 0;
+		}
+	}
+	else
+	{
+		m_pFileHeader->bfOffBits = sizeof(BITMAPFILEHEADER) + sizeof(BITMAPINFOHEADER);
+		m_pBmpInfo = (LPBITMAPINFOHEADER)m_pBitmapHeader;  
+		m_pvColorTable = NULL; 
+	}
+	m_pBmpInfo->biBitCount      = nKlsBmpBitCount;   
+	m_pBmpInfo->biWidth         = nImgWidth;  
+	m_pBmpInfo->biHeight        = nImgHeight;  
+	m_pBmpInfo->biPlanes        = 1;  
+	m_pBmpInfo->biSize          = sizeof(BITMAPINFOHEADER);  
+	m_pBmpInfo->biSizeImage     = nImgWidth * nImgHeight * nKlsBmpBitCount / 8;   
+	m_pBmpInfo->biClrImportant  = 0;  
+	m_pBmpInfo->biClrUsed       = 0;  
+	m_pBmpInfo->biCompression   = 0;  
+	m_pBmpInfo->biXPelsPerMeter = 0;  
+	m_pBmpInfo->biYPelsPerMeter = 0; 
+	SetImgFileData(nDataWidth,nImgHeight);
+	if (nBitcount == 8)
+	{
+		if (nImgWidth%4 == 0)
+		{
+			memset( m_pImgFileData, 0, nDataWidth*nImgHeight ) ;  
+			memcpy( m_pImgFileData, lpImageData, m_capbmp.lBufferSize);
+		}
+		else
+		{
+			memset( m_pImgFileData, 0, nDataWidth*nImgHeight);
+			for (int i=0;i<nImgHeight;i++)
+			{
+				memcpy( m_pImgFileData + i*nDataWidth, lpImageData + i*nImgWidth, nImgWidth );
+			}
+		}
+	}
+	else if (nBitcount == 24)
+	{
+		if ( nImgWidth % 4 == 0 )  
+		{  
+			memset( m_pImgFileData, 0, nDataWidth*nImgHeight ) ;  
+			memcpy( m_pImgFileData, lpImageData, m_capbmp.lBufferSize ) ;  
+		}
+		else
+		{
+			memset( m_pImgFileData, 0, nDataWidth*nImgHeight ) ;  
+			for ( int i=0; i<nImgHeight; i++ )  
+			{  
+				memcpy( m_pImgFileData + i*nDataWidth, lpImageData + i*3*nImgWidth, 3*nImgWidth ) ;  
+			}  
+		}
+	}
+	else if (nBitcount == 32)
+	{
+		memcpy( m_pImgFileData, lpImageData,m_capbmp.lBufferSize );
+	}
+	m_bValidBMP = TRUE;
+	return m_bValidBMP;
+
+}
+
+void CSampleGrabberCB::SetImgFileData( int datawidth,int dataheight )
+{
+	if (!m_pImgFileData)
+	{
+		m_pImgFileData = new BYTE[datawidth*dataheight];
+	}
+	else
+	{
+		delete[] m_pImgFileData;
+		m_pImgFileData = new BYTE[datawidth*dataheight];
+	}
+}
+
+BYTE* CSampleGrabberCB::GetImgFileData()
+{
+	return m_pImgFileData;
+}
+
+void CSampleGrabberCB::SetSafeWnd( HWND hWnd )
+{
+	m_hWnd = hWnd;
+}
+
+LPBITMAPINFOHEADER CSampleGrabberCB::GetBMPInforHeader()
+{
+	return m_pBmpInfo;
+}
+
+LPBITMAPFILEHEADER CSampleGrabberCB::GetBMPFileHeader()
+{
+	return m_pFileHeader;
 }

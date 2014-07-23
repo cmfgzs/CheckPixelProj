@@ -52,6 +52,8 @@ CCheckPixelUIDlg::CCheckPixelUIDlg(CWnd* pParent /*=NULL*/)
 	, m_strSaveDir(_T(""))
 {
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
+	m_hBitmap = NULL;
+	m_lWidth = m_lHeight = 0;
 }
 
 void CCheckPixelUIDlg::DoDataExchange(CDataExchange* pDX)
@@ -60,6 +62,7 @@ void CCheckPixelUIDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_STATIC_VIDEO, m_StaticVideo);
 	DDX_Control(pDX, IDC_COMBO1, m_DevicesList);
 	DDX_Text(pDX, IDC_SAVE_PATH, m_strSaveDir);
+	DDX_Control(pDX, IDC_STATIC_FRAME, m_staticBMP);
 }
 
 BEGIN_MESSAGE_MAP(CCheckPixelUIDlg, CDialog)
@@ -70,6 +73,11 @@ BEGIN_MESSAGE_MAP(CCheckPixelUIDlg, CDialog)
 	ON_BN_CLICKED(IDC_BTN_CAP_IMG, &CCheckPixelUIDlg::OnBnClickedBtnCapImg)
 	ON_BN_CLICKED(IDC_BTN_FREEZE, &CCheckPixelUIDlg::OnBnClickedBtnFreeze)
 	ON_BN_CLICKED(IDC_BTN_SAVE_PATH, &CCheckPixelUIDlg::OnBnClickedBtnSavePath)
+	ON_BN_CLICKED(IDC_BTN_SAVEBMP, &CCheckPixelUIDlg::OnBnClickedBtnSavebmp)
+	ON_BN_CLICKED(IDC_BTN_ANALYSE, &CCheckPixelUIDlg::OnBnClickedBtnAnalyse)
+	ON_WM_ERASEBKGND()
+	ON_WM_TIMER()
+	ON_MESSAGE(WM_CAPTURE_BITMAP,&CCheckPixelUIDlg::OnCapMessage)
 END_MESSAGE_MAP()
 
 
@@ -115,6 +123,8 @@ BOOL CCheckPixelUIDlg::OnInitDialog()
 	{
 		m_cap.Init(0,hWnd);//初始化摄像头
 	}
+	m_staticBMP.ModifyStyle(0xF,SS_BITMAP|SS_CENTERIMAGE);
+	m_cap.m_GrabberCB.SetSafeWnd(this->GetSafeHwnd());
 
 	return TRUE;  // 除非将焦点设置到控件，否则返回 TRUE
 }
@@ -156,7 +166,8 @@ void CCheckPixelUIDlg::OnPaint()
 		dc.DrawIcon(x, y, m_hIcon);
 	}
 	else
-	{
+	{	
+
 		CDialog::OnPaint();
 	}
 }
@@ -172,17 +183,9 @@ HCURSOR CCheckPixelUIDlg::OnQueryDragIcon()
 void CCheckPixelUIDlg::OnBnClickedBtnCapImg()
 {
 	// TODO: 在此添加控件通知处理程序代码
-	if (m_strSaveDir.IsEmpty())
-	{
-		CFileDialog dlg(FALSE,_T("BMP"),_T("SavePic.bmp"),OFN_HIDEREADONLY | OFN_OVERWRITEPROMPT);
-		if (IDOK == dlg.DoModal())
-		{
-			m_cap.m_GrabberCB.m_szFileName = dlg.GetPathName();
-		}
 
-	}
-	m_cap.GrabOneFrame(TRUE);//捕捉一张图片
-	//HBITMAP hbmp = m_cap.m_GrabberCB.m_SnapBMPHandle;
+	KillTimer(TIMER_ID);
+	SetTimer(TIMER_ID,TIMER_DELAY,NULL);
 }
 
 void CCheckPixelUIDlg::OnBnClickedBtnFreeze()
@@ -228,4 +231,82 @@ void CCheckPixelUIDlg::OnBnClickedBtnSavePath()
 	
 	UpdateData(FALSE);
 
+}
+
+void CCheckPixelUIDlg::OnBnClickedBtnSavebmp()
+{
+	// TODO: 保存图片
+	if (m_strSaveDir.IsEmpty())
+	{
+		CFileDialog dlg(FALSE,_T("BMP"),_T("SavePic.bmp"),OFN_HIDEREADONLY | OFN_OVERWRITEPROMPT);
+		if (IDOK == dlg.DoModal())
+		{
+			m_cap.m_GrabberCB.m_szFileName = dlg.GetPathName();
+
+			BYTE* pImageData = new BYTE[m_cap.m_GrabberCB.m_capbmp.lBufferSize];  
+			CopyMemory(pImageData, m_cap.m_GrabberCB.m_capbmp.pBuffer, m_cap.m_GrabberCB.m_capbmp.lBufferSize);
+			m_cap.m_GrabberCB.SaveBitmap(pImageData, m_cap.m_GrabberCB.m_capbmp.lBufferSize);
+			delete[] pImageData;
+		}
+
+	}
+	
+}
+
+void CCheckPixelUIDlg::OnBnClickedBtnAnalyse()
+{
+	// TODO: 对捕捉的进行分析
+
+}
+
+BOOL CCheckPixelUIDlg::OnEraseBkgnd(CDC* pDC)
+{
+	// TODO: 在此添加消息处理程序代码和/或调用默认值
+
+	//return CDialog::OnEraseBkgnd(pDC);
+	return FALSE;
+}
+
+void CCheckPixelUIDlg::OnTimer(UINT_PTR nIDEvent)
+{
+	// TODO: 在此添加消息处理程序代码和/或调用默认值
+	if (TIMER_ID == nIDEvent)
+	{
+		KillTimer(nIDEvent);
+		OnStartCap();
+		//SetTimer (nIDEvent,TIMER_DELAY,NULL);
+		
+	}
+
+	CDialog::OnTimer(nIDEvent);
+}
+
+void CCheckPixelUIDlg::OnStartCap()
+{
+	m_cap.GrabOneFrame(TRUE);//捕捉一张图片
+	return;
+}
+
+LRESULT CCheckPixelUIDlg::OnCapMessage( WPARAM wparam,LPARAM lparam )
+{
+	int wstatus = (int)wparam;
+	int lstatus = (int)lparam;
+	if (wparam == 0)
+	{
+		BYTE* pImageData = new BYTE[m_cap.m_GrabberCB.m_capbmp.lBufferSize];  
+		CopyMemory(pImageData, m_cap.m_GrabberCB.m_capbmp.pBuffer, m_cap.m_GrabberCB.m_capbmp.lBufferSize);
+		if (m_cap.m_GrabberCB.FormatImage(pImageData, 24, m_cap.m_GrabberCB.m_capbmp.bih.biWidth, m_cap.m_GrabberCB.m_capbmp.bih.biHeight))  
+		{  
+			BYTE* byte = m_cap.m_GrabberCB.GetImgFileData();
+			BITMAPINFO BitmapInfo;
+			ZeroMemory(&BitmapInfo, sizeof(BitmapInfo));
+			CopyMemory(&BitmapInfo.bmiHeader,m_cap.m_GrabberCB.GetBMPInforHeader(),sizeof(BITMAPINFOHEADER));
+			m_staticBMP.SetBMPInfoHeader(BitmapInfo);
+			m_staticBMP.SetBytes(byte);
+			m_staticBMP.Invalidate(FALSE);
+		}  
+		//to free memory  
+		delete[] pImageData;
+	}
+	return 0;
 }
