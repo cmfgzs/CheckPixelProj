@@ -67,7 +67,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="strmbasd.lib quartz.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib wpcap.lib netapi32.lib packet.lib IPHlpApi.Lib icmp.lib"
+				AdditionalDependencies="strmbasd.lib quartz.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib wpcap.lib netapi32.lib packet.lib IPHlpApi.Lib icmp.lib GridCtrl.lib"
 				OutputFile="..\Bin\$(ProjectName)D.exe"
 				LinkIncremental="2"
 				AdditionalLibraryDirectories="../Bin;../wincap/Lib"
@@ -213,6 +213,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\ShowResultDlg.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\stdafx.cpp"
 				>
 				<FileConfiguration
@@ -264,6 +268,10 @@
 			</File>
 			<File
 				RelativePath=".\Showpic.h"
+				>
+			</File>
+			<File
+				RelativePath=".\ShowResultDlg.h"
 				>
 			</File>
 			<File
