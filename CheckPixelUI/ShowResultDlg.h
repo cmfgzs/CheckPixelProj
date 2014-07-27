@@ -20,4 +20,5 @@ protected:
 	DECLARE_MESSAGE_MAP()
 public:
 	CGridCtrl m_Grid;
+	virtual BOOL OnInitDialog();
 };
