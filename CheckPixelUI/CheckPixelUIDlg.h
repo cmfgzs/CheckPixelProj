@@ -7,12 +7,24 @@
 #include "CaptureVideo.h"
 #include "ShowBMPStatic.h"
 #include "PictureCtrl.h"
+#include <vector>
+using namespace std;
 
 
 #define TIMER_DELAY 1000 //拍照延时
 #define TIMER_ID 1
 
 // CCheckPixelUIDlg 对话框
+
+enum savebmpcolor
+{
+	color_black,
+	color_white,
+	color_red,
+	color_green,
+	color_blue
+};
+
 class CCheckPixelUIDlg : public CDialog
 {
 // 构造
@@ -39,7 +51,6 @@ protected:
 	afx_msg void OnBnClickedBtnFreeze();
 	afx_msg void OnBnClickedBtnSavePath();
 	afx_msg void OnBnClickedBtnSavebmp();
-	afx_msg void OnBnClickedBtnAnalyse();
 	afx_msg BOOL OnEraseBkgnd(CDC* pDC);
 	afx_msg void OnTimer(UINT_PTR nIDEvent);
 	afx_msg LRESULT OnCapMessage(WPARAM wparam,LPARAM lparam);
@@ -58,6 +69,11 @@ public:
 	CShowBMPStatic m_staticBMP;
 private:
 	void OnStartCap();//开始抓拍
+	void FormatBMPFileName(savebmpcolor colortype,CString& filename);
 
+private:
+	savebmpcolor m_savebmpcolor;//记录抓拍的图片类型，比如纯黑，纯白等等
+
+	vector<CString> m_AllTypeBMPFile;
 	
 };

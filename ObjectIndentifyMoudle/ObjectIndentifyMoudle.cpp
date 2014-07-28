@@ -45,7 +45,7 @@ Author      :Qinbeizhi
 Date        :2014.6.27
 Copyright   :Qinbeizhi
 **************************************************************************************************************************/
-int CameraDataProcessEntry(LPVOID lParam, DetectObjectProperty* pAnalyseResult)
+int CameraDataProcessEntry(LPVOID lParam)
 {
 	int nRetCode = 0; 
 	DataProcessMoudle_CalBack pDataProOperator = NULL;
@@ -57,7 +57,7 @@ int CameraDataProcessEntry(LPVOID lParam, DetectObjectProperty* pAnalyseResult)
 		nRetCode = UNKONWN_DETECT_TYPE;
 		return nRetCode;
 	}
-	nRetCode = pDataProOperator(pDataFromPre->pDataStream, pAnalyseResult);
+	nRetCode = pDataProOperator(pDataFromPre->pDataStream);
 	return nRetCode;
 }
 

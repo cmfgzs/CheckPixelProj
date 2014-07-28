@@ -108,7 +108,8 @@ protected:
 	HRESULT InitCaptureGraphBuilder();
 public:
 	void SetMediaPlayOrPause(BOOL isPlay);
-	void SetSaveBMPFileName(const CString& saveDir);
+	void SetSaveBMPFileDir(const CString& saveDir);
+	void SetSaveBMPFileName(const CString& name);
 	void FreeMediaType(AM_MEDIA_TYPE& mt);
 public:
 	CSampleGrabberCB m_GrabberCB;

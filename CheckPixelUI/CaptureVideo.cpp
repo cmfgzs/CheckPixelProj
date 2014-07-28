@@ -286,7 +286,7 @@ void CCaptureVideo::SetMediaPlayOrPause( BOOL isPlay )
 	}
 }
 
-void CCaptureVideo::SetSaveBMPFileName( const CString& saveDir )
+void CCaptureVideo::SetSaveBMPFileDir( const CString& saveDir )
 {//½ØÆÁ¹¦ÄÜ
 	CString tempFileName = saveDir;
 	int i=1;
@@ -302,6 +302,11 @@ void CCaptureVideo::SetSaveBMPFileName( const CString& saveDir )
 		}
 	}
 	m_GrabberCB.m_szFileName = tempFileName;
+}
+
+void CCaptureVideo::SetSaveBMPFileName( const CString& name )
+{
+	m_GrabberCB.m_szFileName = name;
 }
 
 

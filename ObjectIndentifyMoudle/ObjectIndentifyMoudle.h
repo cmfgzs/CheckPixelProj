@@ -4,7 +4,7 @@
 
 
 /*数据处理函数的定义*/
-typedef int (*DataProcessMoudle_CalBack)(DataStream* pDataStream, DetectObjectProperty* pAnalyseResult);
+typedef int (*DataProcessMoudle_CalBack)(DataStream* pDataStream);
 
 
 /*回调数据结构定义*/
@@ -40,7 +40,7 @@ Author      :Qinbeizhi
 Date          :2014.6.27
 Copyright  :Qinbeizhi
 **************************************************************************************************************************/
-EXTERN_C OBJECTINDENTIFYMOUDLE_API int CameraDataProcessEntry(LPVOID lParam, DetectObjectProperty* pAnalyseResult);
+EXTERN_C OBJECTINDENTIFYMOUDLE_API int CameraDataProcessEntry(LPVOID lParam);
 #endif
 
 

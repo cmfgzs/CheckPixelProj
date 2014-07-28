@@ -1,10 +1,13 @@
 #ifndef _CHECKPIXELUI_BASICDEF_H_
 #define _CHECKPIXELUI_BASICDEF_H_
 #include <windows.h>
+#include<vector> 
+using namespace std;
 /**********************************************宏定义区域Start*************************************************/
 
 /****************错误码定义区Start***************************/
 #define UNKONWN_DETECT_TYPE 0x0001 //未知的检测类型
+#define CAN_NOT_WRITE_SHAREMEM 0xFFFF //写共享内存失败
 /****************错误码定义区End*****************************/
 
 /**********************************************宏定义区域End***************************************************/
@@ -23,11 +26,22 @@ typedef enum
 	EndObject = 0x0010
 }DetectType;
 
+typedef enum
+{
+	Black ,
+	White,
+	Red,
+	Green,
+	Blue	,
+	Complex //非单色图
+}Color;
+
 struct DataStream
 {
 	int        nWidth;       //代分析的数据的宽度
 	int        nHight;		 ////代分析的数据的高度
-	void*      pBuffer;      //该对象的数据
+	void*     pBuffer;      //该对象的数据	
+	Color    eColorType; //色彩类型 
 };
 
 struct DataForFurProcess
@@ -52,30 +66,29 @@ struct DetectObjectProperty
 
 	~DetectObjectProperty()
 	{
-
 	}
-	virtual  int GetResults() = 0;
+	virtual  int GetDetectType() = 0;
 	/*属性部分*/
 
 public : 
-	DetectType emCurDetectType; //当前的检测对象		
+	DetectType emCurDetectType; //当前的检测对象
 };
 
 struct MonitorScreenProperty :DetectObjectProperty
 {
 	MonitorScreenProperty()
 	{
-		nBadPixelNum = 0;
+		emCurDetectType = MonitorScreen;
 	}
 
 	~MonitorScreenProperty()
 	{
-
+		vector<Position>(vBadPixel).swap(vBadPixel);
 	}
 	/*属性部分*/
-public:	
-	int nBadPixelNum; //坏点个数	
-	int GetResults()	{ return nBadPixelNum;}	
+public:
+	vector<Position> vBadPixel; //坏点集合
+	int GetDetectType() {return MonitorScreen;}
 };
 /**********************************************数据结构定义区域End***************************************************/
 #endif

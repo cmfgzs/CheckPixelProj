@@ -5,6 +5,7 @@
 #include "stdafx.h"
 #include "CheckPixelUI.h"
 #include "CheckPixelUIDlg.h"
+#include "ShowResultDlg.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -54,6 +55,7 @@ CCheckPixelUIDlg::CCheckPixelUIDlg(CWnd* pParent /*=NULL*/)
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
 	m_hBitmap = NULL;
 	m_lWidth = m_lHeight = 0;
+	m_savebmpcolor = color_black;
 }
 
 void CCheckPixelUIDlg::DoDataExchange(CDataExchange* pDX)
@@ -74,7 +76,6 @@ BEGIN_MESSAGE_MAP(CCheckPixelUIDlg, CDialog)
 	ON_BN_CLICKED(IDC_BTN_FREEZE, &CCheckPixelUIDlg::OnBnClickedBtnFreeze)
 	ON_BN_CLICKED(IDC_BTN_SAVE_PATH, &CCheckPixelUIDlg::OnBnClickedBtnSavePath)
 	ON_BN_CLICKED(IDC_BTN_SAVEBMP, &CCheckPixelUIDlg::OnBnClickedBtnSavebmp)
-	ON_BN_CLICKED(IDC_BTN_ANALYSE, &CCheckPixelUIDlg::OnBnClickedBtnAnalyse)
 	ON_WM_ERASEBKGND()
 	ON_WM_TIMER()
 	ON_MESSAGE(WM_CAPTURE_BITMAP,&CCheckPixelUIDlg::OnCapMessage)
@@ -227,7 +228,7 @@ void CCheckPixelUIDlg::OnBnClickedBtnSavePath()
 		::CoTaskMemFree(lpidBrowse);
 	}
 	m_strSaveDir = strFolder;
-	m_cap.SetSaveBMPFileName(m_strSaveDir);
+	m_cap.SetSaveBMPFileDir(m_strSaveDir);
 	
 	UpdateData(FALSE);
 
@@ -251,12 +252,6 @@ void CCheckPixelUIDlg::OnBnClickedBtnSavebmp()
 
 	}
 	
-}
-
-void CCheckPixelUIDlg::OnBnClickedBtnAnalyse()
-{
-	// TODO: 对捕捉的进行分析
-
 }
 
 BOOL CCheckPixelUIDlg::OnEraseBkgnd(CDC* pDC)
@@ -283,6 +278,11 @@ void CCheckPixelUIDlg::OnTimer(UINT_PTR nIDEvent)
 
 void CCheckPixelUIDlg::OnStartCap()
 {
+	if (m_strSaveDir.IsEmpty())
+	{
+		AfxMessageBox(_T("先设置保存路径"));
+		return;
+	}
 	m_cap.GrabOneFrame(TRUE);//捕捉一张图片
 	return;
 }
@@ -304,9 +304,66 @@ LRESULT CCheckPixelUIDlg::OnCapMessage( WPARAM wparam,LPARAM lparam )
 			m_staticBMP.SetBMPInfoHeader(BitmapInfo);
 			m_staticBMP.SetBytes(byte);
 			m_staticBMP.Invalidate(FALSE);
+
+			if (!m_strSaveDir.IsEmpty())
+			{
+				CString strtemp;
+				FormatBMPFileName(m_savebmpcolor,strtemp);
+				strtemp = m_strSaveDir+_T("/")+strtemp;
+				m_cap.SetSaveBMPFileName(strtemp);
+				m_cap.m_GrabberCB.SaveBitmap(pImageData,m_cap.m_GrabberCB.m_capbmp.lBufferSize);
+				if (m_savebmpcolor == color_black)
+				{
+					m_AllTypeBMPFile.clear();
+				}
+				m_AllTypeBMPFile.push_back(strtemp);
+				if(m_savebmpcolor == color_blue)
+				{
+					m_savebmpcolor = color_black;
+					//显示结果对话框
+					CShowResultDlg dlg;
+					dlg.SetAllTypeBMPFile(m_AllTypeBMPFile);
+					dlg.DoModal();
+				}					
+				else
+				{
+					m_savebmpcolor = (savebmpcolor)(m_savebmpcolor+1);
+				}
+			}
+
+			//保存图片
+			
+
 		}  
 		//to free memory  
 		delete[] pImageData;
 	}
 	return 0;
+}
+
+void CCheckPixelUIDlg::FormatBMPFileName( savebmpcolor colortype,CString& filename )
+{
+	CString strTemp;
+	SYSTEMTIME st;
+	GetLocalTime(&st);
+	strTemp.Format(_T("%04d%02d%02d %02d%02d%02d"),st.wYear,st.wMonth,st.wDay,st.wHour,st.wMinute,st.wSecond);
+	switch(colortype)
+	{
+	case color_black:
+		strTemp += "_black.bmp";
+		break;
+	case color_white:
+		strTemp += "_white.bmp";
+		break;
+	case color_red:
+		strTemp += "_red.bmp";
+		break;
+	case color_green:
+		strTemp += "_green.bmp";
+		break;
+	case color_blue:
+		strTemp += "_blue.bmp";
+		break;
+	}
+	filename = strTemp;
 }
