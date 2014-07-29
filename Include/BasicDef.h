@@ -91,6 +91,9 @@ public:
 	int GetDetectType() {return MonitorScreen;}
 };
 /**********************************************数据结构定义区域End***************************************************/
+
+#define MAPPINGFILENAME "mappingfile"//用于内存共享的名字
+#define SHAREMEMSIZE 10485760
 #endif
 
 

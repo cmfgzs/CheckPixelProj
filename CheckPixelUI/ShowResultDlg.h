@@ -26,6 +26,9 @@ private:
 	vector<CString> m_AllBMPFile;
 	void InitBMPFiles();
 	void AnalyseBMP();//分析5张图片
+private:
+	char* m_pShareMemData;//共享内存
+	HANDLE m_hMapping;//内存映射文件句柄
 public:
 	CGridCtrl m_Grid;
 	virtual BOOL OnInitDialog();
@@ -36,4 +39,5 @@ public:
 	CPictureCtrl m_RedBMP;
 	CPictureCtrl m_GreenBMP;
 	CPictureCtrl m_BlueBMP;
+	afx_msg void OnBnClickedButton1();
 };

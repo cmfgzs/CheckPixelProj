@@ -4,6 +4,9 @@
 #include "stdafx.h"
 #include "CheckPixelUI.h"
 #include "ShowResultDlg.h"
+#include "../Include/BasicDef.h"
+#include <vector>
+using namespace std;
 
 
 // CShowResultDlg 对话框
@@ -13,11 +16,20 @@ IMPLEMENT_DYNAMIC(CShowResultDlg, CDialog)
 CShowResultDlg::CShowResultDlg(CWnd* pParent /*=NULL*/)
 	: CDialog(CShowResultDlg::IDD, pParent)
 {
-
+	m_pShareMemData = NULL;
+	m_hMapping = NULL;
 }
 
 CShowResultDlg::~CShowResultDlg()
 {
+	if (m_hMapping != NULL)
+	{
+		CloseHandle(m_hMapping);
+	}
+	if (m_pShareMemData != NULL)
+	{
+		UnmapViewOfFile(m_pShareMemData);
+	}
 }
 
 void CShowResultDlg::DoDataExchange(CDataExchange* pDX)
@@ -33,6 +45,7 @@ void CShowResultDlg::DoDataExchange(CDataExchange* pDX)
 
 
 BEGIN_MESSAGE_MAP(CShowResultDlg, CDialog)
+	ON_BN_CLICKED(IDC_BUTTON1, &CShowResultDlg::OnBnClickedButton1)
 END_MESSAGE_MAP()
 
 
@@ -58,8 +71,7 @@ BOOL CShowResultDlg::OnInitDialog()
 		m_Grid.SetColumnWidth(col,64);
 		item.nFormat = DT_CENTER|DT_WORDBREAK;
 		if (col==0)
-		{
-			
+		{			
 			item.strText.Format(_T("编号"),col);
 		}
 		else if (col == 1)
@@ -77,22 +89,23 @@ BOOL CShowResultDlg::OnInitDialog()
 		m_Grid.SetItem(&item);		
 	}
 
-	return TRUE;  // return TRUE unless you set the focus to a control
-	// 异常: OCX 属性页应返回 FALSE
+	return TRUE;
 }
 
 void CShowResultDlg::CreateShareMemory(TCHAR* pName)
 {
-	HANDLE hMapping;
-	long memsize = 10*1024*1024;//开10M空间
-	hMapping = CreateFileMapping(INVALID_HANDLE_VALUE,NULL,PAGE_READWRITE,0,memsize,pName);
-	if (hMapping != NULL)
+	if (m_hMapping != NULL)
 	{
-		char* pbFile = (char*)MapViewOfFile(hMapping,FILE_MAP_READ|FILE_MAP_WRITE,0,0,0);
-		if(pbFile == NULL)
+		CloseHandle(m_hMapping);
+	}
+	m_hMapping = CreateFileMapping(INVALID_HANDLE_VALUE,NULL,PAGE_READWRITE,0,SHAREMEMSIZE,pName);
+	if (m_hMapping != NULL)
+	{
+		m_pShareMemData = (char*)MapViewOfFile(m_hMapping,FILE_MAP_READ|FILE_MAP_WRITE,0,0,0);
+		if(m_pShareMemData == NULL)
 		{
-			CloseHandle(hMapping);
-			hMapping = NULL;
+			CloseHandle(m_hMapping);
+			m_hMapping = NULL;
 			return;
 		}
 	}
@@ -118,10 +131,37 @@ void CShowResultDlg::InitBMPFiles()
 	m_RedBMP.Load(m_AllBMPFile[2]);
 	m_GreenBMP.Load(m_AllBMPFile[3]);
 	m_BlueBMP.Load(m_AllBMPFile[4]);
-
 }
 
 void CShowResultDlg::AnalyseBMP()
 {
+	//分析5张BMP图
+	CreateShareMemory(TEXT(MAPPINGFILENAME));//申请共享内存	
+	if (m_pShareMemData != NULL)
+	{//进行分析操作
+		//先初始化
+		memset(m_pShareMemData,-1,SHAREMEMSIZE*sizeof(char));
 
+		/************************************************************************/
+		/* 分析过程                                                                     */
+		/************************************************************************/
+
+		vector<Position> AllBadPosition;
+		char* pTempData = m_pShareMemData;
+		int structPosSize = sizeof(Position);
+		int count = 0;
+		while((*pTempData)!=-1)
+		{
+			count++;
+			pTempData++;
+		}
+		memcpy(&AllBadPosition,m_pShareMemData,count);//将所有数据拷贝到vector中
+	}
+}
+
+
+void CShowResultDlg::OnBnClickedButton1()
+{
+	// TODO: 在此添加控件通知处理程序代码
+	AnalyseBMP();
 }
