@@ -46,6 +46,7 @@ void CShowResultDlg::DoDataExchange(CDataExchange* pDX)
 
 BEGIN_MESSAGE_MAP(CShowResultDlg, CDialog)
 	ON_BN_CLICKED(IDC_BUTTON1, &CShowResultDlg::OnBnClickedButton1)
+	ON_BN_CLICKED(IDC_BTN_EXPORT, &CShowResultDlg::OnBnClickedBtnExport)
 END_MESSAGE_MAP()
 
 
@@ -72,19 +73,19 @@ BOOL CShowResultDlg::OnInitDialog()
 		item.nFormat = DT_CENTER|DT_WORDBREAK;
 		if (col==0)
 		{			
-			item.strText.Format(_T("编号"),col);
+			item.strText = _T("编号");
 		}
 		else if (col == 1)
 		{
-			item.strText.Format(_T("X"),col);
+			item.strText = _T("X");
 		}
 		else if (col == 2)
 		{
-			item.strText.Format(_T("Y"),col);
+			item.strText = _T("Y");
 		}
 		else if (col == 3)
 		{
-			item.strText.Format(_T("X"),col);
+			item.strText=_T("X");
 		}
 		m_Grid.SetItem(&item);		
 	}
@@ -156,6 +157,34 @@ void CShowResultDlg::AnalyseBMP()
 			pTempData++;
 		}
 		memcpy(&AllBadPosition,m_pShareMemData,count);//将所有数据拷贝到vector中
+		for (size_t i=0;i<AllBadPosition.size();i++)
+		{
+			Position tempP = AllBadPosition[i];
+			int x = tempP.Xposition;
+			int y = tempP.Yposition;
+			for (int col=0;col<m_Grid.GetColumnCount();col++)
+			{
+				GV_ITEM item;
+				item.nFormat =  DT_CENTER|DT_VCENTER
+					|DT_SINGLELINE|DT_END_ELLIPSIS
+					|DT_NOPREFIX;
+				item.row = i+1;
+				item.col = col;
+				if (col == 0)
+				{
+					item.strText.Format(_T("%d"),i+1);
+				}
+				else if (col == 1)
+				{
+					item.strText.Format(_T("%d"),x);
+				}
+				else if (col == 2)
+				{
+					item.strText.Format(_T("%d"),y);
+				}				
+				m_Grid.SetItem(&item);
+			}			
+		}
 	}
 }
 
@@ -164,4 +193,41 @@ void CShowResultDlg::OnBnClickedButton1()
 {
 	// TODO: 在此添加控件通知处理程序代码
 	AnalyseBMP();
+}
+
+void CShowResultDlg::OnBnClickedBtnExport()
+{
+	// TODO: 导出结果为CSV
+	CFileDialog dlg(FALSE,_T("CSV"),_T("SavePic.csv"),OFN_HIDEREADONLY | OFN_OVERWRITEPROMPT);
+	if (IDOK == dlg.DoModal())
+	{
+		CStdioFile file;
+		CString savefile = dlg.GetPathName();
+		file.Open(savefile,CFile::modeWrite);
+		for (int row=1;row<m_Grid.GetRowCount();row++)
+		{
+			Position tempp;
+			for (int col=1;col<m_Grid.GetColumnCount();col++)
+			{
+				GV_ITEM item;
+				item.col = col;
+				item.row = row;
+				m_Grid.GetItem(&item);
+				if (col == 1)
+				{
+					tempp.Xposition = _ttoi(item.strText);
+				}
+				else if (col == 2)
+				{
+					tempp.Yposition = _ttoi(item.strText);
+				}
+			}
+			//写文件			
+			CString strtemp;
+			strtemp.Format(_T("%d,%d,%d\n"),row,tempp.Xposition,tempp.Yposition);
+			file.WriteString(strtemp);		
+		}
+		file.Flush();
+		file.Close();
+	}
 }

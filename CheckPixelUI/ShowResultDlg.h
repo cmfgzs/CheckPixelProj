@@ -40,4 +40,5 @@ public:
 	CPictureCtrl m_GreenBMP;
 	CPictureCtrl m_BlueBMP;
 	afx_msg void OnBnClickedButton1();
+	afx_msg void OnBnClickedBtnExport();
 };
