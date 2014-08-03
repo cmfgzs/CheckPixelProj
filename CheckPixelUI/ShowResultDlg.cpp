@@ -5,6 +5,7 @@
 #include "CheckPixelUI.h"
 #include "ShowResultDlg.h"
 #include "../Include/BasicDef.h"
+#include "../IdentifyOutlineLib/LibExport.h"
 #include <vector>
 using namespace std;
 
@@ -143,10 +144,23 @@ void CShowResultDlg::AnalyseBMP()
 		//先初始化
 		memset(m_pShareMemData,-1,SHAREMEMSIZE*sizeof(char));
 
-		/************************************************************************/
-		/* 分析过程                                                                     */
-		/************************************************************************/
-
+		bool bFailed = false;
+		for (int i=0;i<m_AllBMPFile.size();i++)
+		{
+			CStringA tempFile(m_AllBMPFile[i]);
+			bool bTemp = CheckPiexl(tempFile.GetBuffer());//5张检测图片
+			tempFile.ReleaseBuffer();
+			if (!bTemp)
+			{
+				bFailed = true;
+				break;
+			}
+		}
+		if (bFailed)
+		{
+			AfxMessageBox(_T("检测图片边界失败!"));
+			return;
+		}
 		vector<Position> AllBadPosition;
 		char* pTempData = m_pShareMemData;
 		int structPosSize = sizeof(Position);
